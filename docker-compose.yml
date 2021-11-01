@@ -1,0 +1,37 @@
+version: "3.8"
+services:
+  db:
+    build:
+      context: ./db
+    environment:
+      POSTGRES_PASSWORD: graphile
+      POSTGRES_USER: graphile
+      POSTGRES_DB: graphile
+    expose:
+      - "5432"
+    restart: always
+    volumes:
+      - graphile_data:/var/lib/postgresql/data
+
+  graphql:
+    build:
+      context: ./graphql
+    # environment:
+      # https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+      # POSTGRES_URI: postgresql://graphile:graphile@db/graphile
+    depends_on:
+      - db
+    # https://www.graphile.org/postgraphile/usage-cli/
+    command: ["--connection", "postgresql://graphile:graphile@db/graphile", "--port", "5000", "--schema", "graphile_internal", "--append-plugins", "postgraphile-plugin-connection-filter"]
+    ports:
+      - '5000:5000'
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  graphile_data:
